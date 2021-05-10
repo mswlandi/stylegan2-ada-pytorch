@@ -65,7 +65,9 @@ class StyleGAN2Loss(Loss):
         if do_Gmain:
             with torch.autograd.profiler.record_function('Gmain_forward'):
                 gen_img, _gen_ws = self.run_G(gen_z, gen_c, sync=(sync and not do_Gpl)) # May get synced by Gpl.
-                print(np.mean(gen_img, axis=(0, 1))[2])
+                #print(np.mean(gen_img, axis=(0, 1))[2])
+                print(type(gen_img))
+                print(gen_img.shape)
                 gen_logits = self.run_D(gen_img, gen_c, sync=False)
                 training_stats.report('Loss/scores/fake', gen_logits)
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
