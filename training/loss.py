@@ -91,10 +91,6 @@ class StyleGAN2Loss(Loss):
 
                 diff = torch.FloatTensor(diff_batch).reshape(-1, 1)
 
-                print(diff)
-
-                raise Exception("hmm")
-
                 #mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
 
                 loss_Gmain = G_loss + diff
