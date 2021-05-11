@@ -74,7 +74,7 @@ class StyleGAN2Loss(Loss):
                 img_target = face_recognition.load_image_file("targets/target.png")
                 target_encoding = face_recognition.face_encodings(img_target, model="large")[0]
 
-                img = np.asarray(gen_img, dtype=np.float32)
+                img = np.asarray(gen_img.cpu(), dtype=np.float32)
                 img = (img+1)*(255/2)
                 img = np.rint(img).clip(0, 255).astype(np.uint8)
 
