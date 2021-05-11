@@ -71,7 +71,7 @@ class StyleGAN2Loss(Loss):
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
                 G_loss = torch.nn.functional.softplus(-gen_logits) # -log(sigmoid(gen_logits))
                 
-                img_target = face_recognition.load_image_file(img_target_src)
+                img_target = face_recognition.load_image_file("targets/target.png")
                 target_encoding = face_recognition.face_encodings(img_target, model="large")[0]
 
                 img = np.asarray(gen_img, dtype=np.float32)
