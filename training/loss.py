@@ -74,15 +74,24 @@ class StyleGAN2Loss(Loss):
                 img_target = face_recognition.load_image_file("targets/target.png")
                 target_encoding = face_recognition.face_encodings(img_target, model="large")[0]
 
-                img = np.asarray(gen_img.cpu(), dtype=np.float32)
-                img = (img+1)*(255/2)
-                img = np.rint(img).clip(0, 255).astype(np.uint8)
+                img_batch_unknown = gen_img.detach().numpy()
+                img_batch_unknown = (img_batch_unknown+1)*(255/2)
+                img = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
 
-                try:
-                    unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
-                    diff = face_recognition.face_distance([unknown_encoding], target_encoding)[0]
-                except IndexError:
-                    diff = 1.0
+                diff_batch = []
+                for img in img_batch_unknown:
+                    try:
+                        unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
+                        diff_img = face_recognition.face_distance([unknown_encoding], target_encoding)[0]
+                        diff_batch.append(diff_img)
+                    except IndexError:
+                        diff_batch.append(1.0)
+
+                diff = torch.FloatTensor(diff_batch).reshape(-1, 1)
+
+                print(diff)
+
+                raise Exception("hmm")
 
                 #mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
 
