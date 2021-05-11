@@ -89,7 +89,7 @@ class StyleGAN2Loss(Loss):
                     except IndexError:
                         diff_batch.append(1.0)
 
-                diff = torch.FloatTensor(diff_batch).reshape(-1, 1)
+                diff = torch.FloatTensor(diff_batch).reshape(-1, 1).to(device=self.device)
 
                 #mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
 
