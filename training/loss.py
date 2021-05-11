@@ -80,12 +80,9 @@ class StyleGAN2Loss(Loss):
                 img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
                 img_batch_unknown = img_batch_unknown.transpose(0,2,3,1)
 
-
                 diff_batch = []
                 for img in img_batch_unknown:
                     try:
-                        Image.fromarray(img, 'RGB').save("/content/teste.png")
-                        raise Exception("hmm")
                         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
                         diff_img = face_recognition.face_distance([unknown_encoding], target_encoding)[0]
                         diff_batch.append(diff_img)
