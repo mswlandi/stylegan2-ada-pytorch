@@ -12,6 +12,7 @@ from torch_utils import training_stats
 from torch_utils import misc
 from torch_utils.ops import conv2d_gradfix
 import face_recognition
+from PIL import Image
 
 #----------------------------------------------------------------------------
 
@@ -77,14 +78,14 @@ class StyleGAN2Loss(Loss):
                 img_batch_unknown = gen_img.cpu().detach().numpy()
                 img_batch_unknown = (img_batch_unknown+1)*(255/2)
                 img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
+                img_batch_unknown = img_batch_unknown.transpose(1,2,0)
+
+                Image.fromarray(img_batch_unknown, 'RGB').save("/content/teste.png")
+                raise Exception("hmm")
 
                 diff_batch = []
                 for img in img_batch_unknown:
                     try:
-
-                        print(img.shape)
-                        print(img)
-
                         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
                         diff_img = face_recognition.face_distance([unknown_encoding], target_encoding)[0]
                         diff_batch.append(diff_img)
