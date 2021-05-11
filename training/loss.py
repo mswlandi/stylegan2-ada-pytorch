@@ -11,6 +11,7 @@ import torch
 from torch_utils import training_stats
 from torch_utils import misc
 from torch_utils.ops import conv2d_gradfix
+import face_recognition
 
 #----------------------------------------------------------------------------
 
@@ -69,8 +70,23 @@ class StyleGAN2Loss(Loss):
                 training_stats.report('Loss/scores/fake', gen_logits)
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
                 G_loss = torch.nn.functional.softplus(-gen_logits) # -log(sigmoid(gen_logits))
-                mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
-                loss_Gmain = G_loss + mean_blue
+                
+                img_target = face_recognition.load_image_file(img_target_src)
+                target_encoding = face_recognition.face_encodings(img_target, model="large")[0]
+
+                img = np.asarray(gen_img, dtype=np.float32)
+                img = (img+1)*(255/2)
+                img = np.rint(img).clip(0, 255).astype(np.uint8)
+
+                try:
+                    unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
+                    diff = face_recognition.face_distance([unknown_encoding], target_encoding)[0]
+                except IndexError:
+                    diff = 1.0
+
+                #mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
+
+                loss_Gmain = G_loss + diff
                 training_stats.report('Loss/G/loss', loss_Gmain)
             with torch.autograd.profiler.record_function('Gmain_backward'):
                 loss_Gmain.mean().mul(gain).backward()
