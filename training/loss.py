@@ -76,7 +76,7 @@ class StyleGAN2Loss(Loss):
 
                 img_batch_unknown = gen_img.cpu().detach().numpy()
                 img_batch_unknown = (img_batch_unknown+1)*(255/2)
-                img = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
+                img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
 
                 diff_batch = []
                 for img in img_batch_unknown:
