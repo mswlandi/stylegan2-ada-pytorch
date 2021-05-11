@@ -82,7 +82,7 @@ class StyleGAN2Loss(Loss):
                 for img in img_batch_unknown:
                     try:
 
-                        print(img.shape())
+                        print(img.shape)
                         print(img)
 
                         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
