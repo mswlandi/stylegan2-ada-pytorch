@@ -70,7 +70,7 @@ class StyleGAN2Loss(Loss):
                 training_stats.report('Loss/scores/fake', gen_logits)
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
                 G_loss = torch.nn.functional.softplus(-gen_logits) # -log(sigmoid(gen_logits))
-                mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1)
+                mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
                 loss_Gmain = G_loss + mean_blue
                 print(loss_Gmain)
                 #print(loss_Gmain)  # tensor([[0.7624], [1.5252], [1.0427], [1.1071]], device = 'cuda:0', grad_fn = <SoftplusBackward >)
