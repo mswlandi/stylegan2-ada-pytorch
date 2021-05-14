@@ -245,14 +245,12 @@ def training_loop(
     target_encodings = []
     for i, img_path in enumerate(sorted(os.listdir(folder_targets))):
             if img_path[-4:] in ('.png', '.jpg', '.jpeg'):
-                img_target = face_recognition.load_image_file(
-                    folder_targets+img_path)
+                img_target = face_recognition.load_image_file(folder_targets+img_path)
                 try:
-                    target_encoding = face_recognition.face_encodings(
-                        img_target, model="large")[0]
+                    target_encoding = face_recognition.face_encodings(img_target, model="large")[0]
+                    target_encodings.append(target_encoding)
                 except IndexError:
                     continue
-                target_encodings.append(target_encoding)
     print(f'calculated face encoding for {len(target_encodings)} faces.')
 
     # Train.
