@@ -82,7 +82,7 @@ class StyleGAN2Loss(Loss):
                         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
                         diff_img = 0
                         for target_encoding in target_encodings:
-                            diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(targets)
+                            diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(target_encodings)
                         diff_batch.append(diff_img)
                     except IndexError:
                         diff_batch.append(1.0)

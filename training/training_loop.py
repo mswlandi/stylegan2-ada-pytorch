@@ -253,6 +253,7 @@ def training_loop(
                 except IndexError:
                     continue
                 target_encodings.append(target_encoding)
+    print(f'calculated face encoding for {len(target_encodings)} faces.')
 
     # Train.
     if rank == 0:
