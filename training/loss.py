@@ -13,6 +13,7 @@ from torch_utils import misc
 from torch_utils.ops import conv2d_gradfix
 import face_recognition
 from PIL import Image
+import os
 
 #----------------------------------------------------------------------------
 
@@ -72,8 +73,16 @@ class StyleGAN2Loss(Loss):
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
                 G_loss = torch.nn.functional.softplus(-gen_logits) # -log(sigmoid(gen_logits))
                 
-                img_target = face_recognition.load_image_file("targets/target.png")
-                target_encoding = face_recognition.face_encodings(img_target, model="large")[0]
+                folder_targets = 'targets/'
+                targets = []
+                for i, img_path in enumerate(sorted(os.listdir(folder_targets))):
+                    if img_path[-4:] in ('.png', '.jpg', '.jpeg'):
+                        img_target = face_recognition.load_image_file(folder_targets+img_path)
+                        try:
+                            target_encoding = face_recognition.face_encodings(img_target, model="large")[0]
+                        except IndexError:
+                            continue
+                        targets.append(target_encoding)
 
                 img_batch_unknown = gen_img.cpu().detach().numpy()
                 img_batch_unknown = (img_batch_unknown+1)*(255/2)
@@ -84,7 +93,9 @@ class StyleGAN2Loss(Loss):
                 for img in img_batch_unknown:
                     try:
                         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
-                        diff_img = face_recognition.face_distance([unknown_encoding], target_encoding)[0]
+                        diff_img = 0
+                        for target_encoding in targets:
+                            diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(targets)
                         diff_batch.append(diff_img)
                     except IndexError:
                         diff_batch.append(1.0)
