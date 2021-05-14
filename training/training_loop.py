@@ -20,6 +20,8 @@ from torch_utils import misc
 from torch_utils import training_stats
 from torch_utils.ops import conv2d_gradfix
 from torch_utils.ops import grid_sample_gradfix
+import face_recognition
+import os
 
 import legacy
 from metrics import metric_main
@@ -239,6 +241,19 @@ def training_loop(
         except ImportError as err:
             print('Skipping tfevents export:', err)
 
+    folder_targets = 'targets/'
+    target_encodings = []
+    for i, img_path in enumerate(sorted(os.listdir(folder_targets))):
+            if img_path[-4:] in ('.png', '.jpg', '.jpeg'):
+                img_target = face_recognition.load_image_file(
+                    folder_targets+img_path)
+                try:
+                    target_encoding = face_recognition.face_encodings(
+                        img_target, model="large")[0]
+                except IndexError:
+                    continue
+                target_encodings.append(target_encoding)
+
     # Train.
     if rank == 0:
         print(f'Training for {total_kimg} kimg...')
@@ -279,7 +294,8 @@ def training_loop(
             for round_idx, (real_img, real_c, gen_z, gen_c) in enumerate(zip(phase_real_img, phase_real_c, phase_gen_z, phase_gen_c)):
                 sync = (round_idx == batch_size // (batch_gpu * num_gpus) - 1)
                 gain = phase.interval
-                loss.accumulate_gradients(phase=phase.name, real_img=real_img, real_c=real_c, gen_z=gen_z, gen_c=gen_c, sync=sync, gain=gain)
+                loss.accumulate_gradients(phase=phase.name, real_img=real_img, real_c=real_c,
+                                          gen_z=gen_z, gen_c=gen_c, sync=sync, gain=gain, target_encodings=target_encodings)
 
             # Update weights.
             phase.module.requires_grad_(False)
