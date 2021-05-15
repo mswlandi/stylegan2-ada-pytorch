@@ -71,27 +71,28 @@ class StyleGAN2Loss(Loss):
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
                 G_loss = torch.nn.functional.softplus(-gen_logits) # -log(sigmoid(gen_logits))
 
-                img_batch_unknown = gen_img.cpu().detach().numpy()
-                img_batch_unknown = (img_batch_unknown+1)*(255/2)
-                img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
-                img_batch_unknown = img_batch_unknown.transpose(0,2,3,1)
+                # img_batch_unknown = gen_img.cpu().detach().numpy()
+                # img_batch_unknown = (img_batch_unknown+1)*(255/2)
+                # img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
+                # img_batch_unknown = img_batch_unknown.transpose(0,2,3,1)
 
-                diff_batch = []
-                for img in img_batch_unknown:
-                    try:
-                        unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
-                        diff_img = 0
-                        for target_encoding in target_encodings:
-                            diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(target_encodings)
-                        diff_batch.append(diff_img)
-                    except IndexError:
-                        diff_batch.append(1.0)
+                # diff_batch = []
+                # for img in img_batch_unknown:
+                #     try:
+                #         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
+                #         diff_img = 0
+                #         for target_encoding in target_encodings:
+                #             diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(target_encodings)
+                #         diff_batch.append(diff_img)
+                #     except IndexError:
+                #         diff_batch.append(1.0)
 
-                diff = torch.FloatTensor(diff_batch).reshape(-1, 1).to(device=self.device)
+                # diff = torch.FloatTensor(diff_batch).reshape(-1, 1).to(device=self.device)
+                # loss_Gmain = G_loss + diff
 
-                #mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
+                mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
+                loss_Gmain = G_loss + mean_blue
 
-                loss_Gmain = G_loss + diff
                 training_stats.report('Loss/G/loss', loss_Gmain)
             with torch.autograd.profiler.record_function('Gmain_backward'):
                 loss_Gmain.mean().mul(gain).backward()
