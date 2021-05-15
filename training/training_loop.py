@@ -242,7 +242,7 @@ def training_loop(
             print('Skipping tfevents export:', err)
 
     # folder_targets = 'targets/'
-    # target_encodings = []
+    target_encodings = []
     # for i, img_path in enumerate(sorted(os.listdir(folder_targets))):
     #         if img_path[-4:] in ('.png', '.jpg', '.jpeg'):
     #             img_target = face_recognition.load_image_file(folder_targets+img_path)
