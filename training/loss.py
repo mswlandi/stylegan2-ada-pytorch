@@ -93,7 +93,7 @@ class StyleGAN2Loss(Loss):
                 mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
                 loss_Gmain = G_loss + mean_blue
 
-                if (G_loss[0] > 1.0):
+                if (G_loss[0] > 2.0):
                     print(G_loss[0])
                     raise Exception("hmm")
 
