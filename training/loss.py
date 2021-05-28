@@ -73,33 +73,33 @@ class StyleGAN2Loss(Loss):
                 G_loss = torch.nn.functional.softplus(-gen_logits) # -log(sigmoid(gen_logits))
 
                 if characteristics:
-                    # # Converte imagem em tensor para imagem em array numpy
-                    # img_batch_unknown = gen_img.cpu().detach().numpy()
-                    # img_batch_unknown = (img_batch_unknown+1)*(255/2)
-                    # img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
-                    # img_batch_unknown = img_batch_unknown.transpose(0,2,3,1)
+                    # Converte imagem em tensor para imagem em array numpy
+                    img_batch_unknown = gen_img.cpu().detach().numpy()
+                    img_batch_unknown = (img_batch_unknown+1)*(255/2)
+                    img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
+                    img_batch_unknown = img_batch_unknown.transpose(0,2,3,1)
 
-                    # # Para cada imagem do batch, adiciona um valor de diferença à cara alvo à lista de loss
-                    # diff_batch = []
-                    # for img in img_batch_unknown:
-                    #     try:
-                    #         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
-                    #         diff_img = 0
-                    #         for target_encoding in target_encodings:
-                    #             diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(target_encodings)
-                    #         diff_batch.append(diff_img)
-                    #     except IndexError:
-                    #         diff_batch.append(1.0)
+                    # Para cada imagem do batch, adiciona um valor de diferença à cara alvo à lista de loss
+                    diff_batch = []
+                    for img in img_batch_unknown:
+                        try:
+                            unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
+                            diff_img = 0
+                            for target_encoding in target_encodings:
+                                diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(target_encodings)
+                            diff_batch.append(diff_img)
+                        except IndexError:
+                            diff_batch.append(1.0)
 
-                    # # Converte a lista de losses da diferença de caras para tensor
-                    # diff = torch.FloatTensor(diff_batch).reshape(-1, 1).to(device=self.device)
+                    # Converte a lista de losses da diferença de caras para tensor
+                    diff = torch.FloatTensor(diff_batch).reshape(-1, 1).to(device=self.device)
 
-                    # # Soma o loss de realismo da imagem com o loss de diferença de cara
-                    # loss_Gmain = G_loss + diff
+                    # Soma o loss de realismo da imagem com o loss de diferença de cara
+                    loss_Gmain = G_loss + diff
 
-                    # Alternativa: quantidade média de azul na imagem, de 0 a 1
-                    mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
-                    loss_Gmain = G_loss + mean_blue
+                    # # Alternativa: quantidade média de azul na imagem, de 0 a 1
+                    # mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
+                    # loss_Gmain = G_loss + mean_blue
                 else:
                     loss_Gmain = G_loss
 
