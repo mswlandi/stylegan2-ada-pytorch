@@ -120,6 +120,7 @@ def training_loop(
     cudnn_benchmark         = True,     # Enable torch.backends.cudnn.benchmark?
     abort_fn                = None,     # Callback function for determining whether to abort training. Must return consistent results across ranks.
     progress_fn             = None,     # Callback function for updating training progress. Called for all ranks.
+    characteristics         = None,     # Switches off discriminator training and changes loss function of generator for characteristics training
 ):
     # Initialize.
     start_time = time.time()
@@ -294,7 +295,8 @@ def training_loop(
                 sync = (round_idx == batch_size // (batch_gpu * num_gpus) - 1)
                 gain = phase.interval
                 loss.accumulate_gradients(phase=phase.name, real_img=real_img, real_c=real_c,
-                                          gen_z=gen_z, gen_c=gen_c, sync=sync, gain=gain, target_encodings=target_encodings)
+                                          gen_z=gen_z, gen_c=gen_c, sync=sync, gain=gain, target_encodings=target_encodings,
+                                          characteristics=characteristics)
 
             # Update weights.
             phase.module.requires_grad_(False)

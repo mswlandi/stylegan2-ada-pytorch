@@ -55,7 +55,7 @@ class StyleGAN2Loss(Loss):
             logits = self.D(img, c)
         return logits
 
-    def accumulate_gradients(self, phase, real_img, real_c, gen_z, gen_c, sync, gain, target_encodings):
+    def accumulate_gradients(self, phase, real_img, real_c, gen_z, gen_c, sync, gain, target_encodings, characteristics):
         assert phase in ['Gmain', 'Greg', 'Gboth', 'Dmain', 'Dreg', 'Dboth']
         do_Gmain = (phase in ['Gmain', 'Gboth'])
         do_Dmain = (phase in ['Dmain', 'Dboth'])
@@ -72,33 +72,36 @@ class StyleGAN2Loss(Loss):
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
                 G_loss = torch.nn.functional.softplus(-gen_logits) # -log(sigmoid(gen_logits))
 
-                # Converte imagem em tensor para imagem em array numpy
-                img_batch_unknown = gen_img.cpu().detach().numpy()
-                img_batch_unknown = (img_batch_unknown+1)*(255/2)
-                img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
-                img_batch_unknown = img_batch_unknown.transpose(0,2,3,1)
+                if characteristics:
+                    # # Converte imagem em tensor para imagem em array numpy
+                    # img_batch_unknown = gen_img.cpu().detach().numpy()
+                    # img_batch_unknown = (img_batch_unknown+1)*(255/2)
+                    # img_batch_unknown = np.rint(img_batch_unknown).clip(0, 255).astype(np.uint8)
+                    # img_batch_unknown = img_batch_unknown.transpose(0,2,3,1)
 
-                # Para cada imagem do batch, adiciona um valor de diferença à cara alvo à lista de loss
-                diff_batch = []
-                for img in img_batch_unknown:
-                    try:
-                        unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
-                        diff_img = 0
-                        for target_encoding in target_encodings:
-                            diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(target_encodings)
-                        diff_batch.append(diff_img)
-                    except IndexError:
-                        diff_batch.append(1.0)
+                    # # Para cada imagem do batch, adiciona um valor de diferença à cara alvo à lista de loss
+                    # diff_batch = []
+                    # for img in img_batch_unknown:
+                    #     try:
+                    #         unknown_encoding = face_recognition.face_encodings(img, model="large")[0]
+                    #         diff_img = 0
+                    #         for target_encoding in target_encodings:
+                    #             diff_img += face_recognition.face_distance([unknown_encoding], target_encoding)[0] / len(target_encodings)
+                    #         diff_batch.append(diff_img)
+                    #     except IndexError:
+                    #         diff_batch.append(1.0)
 
-                # Converte a lista de losses da diferença de caras para tensor
-                diff = torch.FloatTensor(diff_batch).reshape(-1, 1).to(device=self.device)
+                    # # Converte a lista de losses da diferença de caras para tensor
+                    # diff = torch.FloatTensor(diff_batch).reshape(-1, 1).to(device=self.device)
 
-                # Soma o loss de realismo da imagem com o loss de diferença de cara
-                loss_Gmain = G_loss + diff
+                    # # Soma o loss de realismo da imagem com o loss de diferença de cara
+                    # loss_Gmain = G_loss + diff
 
-                # Alternativa: quantidade média de azul na imagem, de 0 a 1
-                # mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
-                # loss_Gmain = G_loss + mean_blue
+                    # Alternativa: quantidade média de azul na imagem, de 0 a 1
+                    mean_blue = torch.mean(gen_img.double(), (2, 3))[:,2].multiply(-0.5).add(1).reshape(-1,1)
+                    loss_Gmain = G_loss + mean_blue
+                else:
+                    loss_Gmain = G_loss
 
                 training_stats.report('Loss/G/loss', loss_Gmain)
             with torch.autograd.profiler.record_function('Gmain_backward'):
@@ -124,7 +127,7 @@ class StyleGAN2Loss(Loss):
 
         # Dmain: Minimize logits for generated images.
         loss_Dgen = 0
-        if do_Dmain:
+        if do_Dmain and not characteristics:
             with torch.autograd.profiler.record_function('Dgen_forward'):
                 gen_img, _gen_ws = self.run_G(gen_z, gen_c, sync=False)
                 gen_logits = self.run_D(gen_img, gen_c, sync=False) # Gets synced by loss_Dreal.
@@ -136,7 +139,7 @@ class StyleGAN2Loss(Loss):
 
         # Dmain: Maximize logits for real images.
         # Dr1: Apply R1 regularization.
-        if do_Dmain or do_Dr1:
+        if (do_Dmain or do_Dr1) and not characteristics:
             name = 'Dreal_Dr1' if do_Dmain and do_Dr1 else 'Dreal' if do_Dmain else 'Dr1'
             with torch.autograd.profiler.record_function(name + '_forward'):
                 real_img_tmp = real_img.detach().requires_grad_(do_Dr1)
