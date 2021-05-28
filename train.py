@@ -67,6 +67,9 @@ def setup_training_loop_kwargs(
     nhwc       = None, # Use NHWC memory format with FP16: <bool>, default = False
     nobench    = None, # Disable cuDNN benchmarking: <bool>, default = False
     workers    = None, # Override number of DataLoader workers: <int>, default = 3
+
+    # Characteristic training
+    trainforcharacteristics = None, # switches off discriminator training and changes loss function of generator, default = False
 ):
     args = dnnlib.EasyDict()
 
@@ -381,6 +384,16 @@ def setup_training_loop_kwargs(
             raise UserError('--workers must be at least 1')
         args.data_loader_kwargs.num_workers = workers
 
+    # -------------------------------------------------
+    # Characteristics training options: trainforcharacteristics
+    # -------------------------------------------------
+
+    if trainforcharacteristics is None:
+        trainforcharacteristics = False
+    assert isinstance(trainforcharacteristics, bool)
+    if trainforcharacteristics:
+        args.characteristics = trainforcharacteristics
+    
     return desc, args
 
 #----------------------------------------------------------------------------
@@ -463,6 +476,9 @@ class CommaSeparatedList(click.ParamType):
 @click.option('--nobench', help='Disable cuDNN benchmarking', type=bool, metavar='BOOL')
 @click.option('--workers', help='Override number of DataLoader workers', type=int, metavar='INT')
 
+# Characteristics training
+@click.option('--trainforcharacteristics', help='Switches off discriminator training and changes loss function of generator for characteristics training', type=bool, metavar='BOOL')
+
 def main(ctx, outdir, dry_run, **config_kwargs):
     """Train a GAN using the techniques described in the paper
     "Training Generative Adversarial Networks with Limited Data".
@@ -530,14 +546,15 @@ def main(ctx, outdir, dry_run, **config_kwargs):
     print('Training options:')
     print(json.dumps(args, indent=2))
     print()
-    print(f'Output directory:   {args.run_dir}')
-    print(f'Training data:      {args.training_set_kwargs.path}')
-    print(f'Training duration:  {args.total_kimg} kimg')
-    print(f'Number of GPUs:     {args.num_gpus}')
-    print(f'Number of images:   {args.training_set_kwargs.max_size}')
-    print(f'Image resolution:   {args.training_set_kwargs.resolution}')
-    print(f'Conditional model:  {args.training_set_kwargs.use_labels}')
-    print(f'Dataset x-flips:    {args.training_set_kwargs.xflip}')
+    print(f'Output directory:           {args.run_dir}')
+    print(f'Training data:              {args.training_set_kwargs.path}')
+    print(f'Training duration:          {args.total_kimg} kimg')
+    print(f'Number of GPUs:             {args.num_gpus}')
+    print(f'Number of images:           {args.training_set_kwargs.max_size}')
+    print(f'Image resolution:           {args.training_set_kwargs.resolution}')
+    print(f'Conditional model:          {args.training_set_kwargs.use_labels}')
+    print(f'Dataset x-flips:            {args.training_set_kwargs.xflip}')
+    print(f'Characteristics training:   {args.characteristics}')
     print()
 
     # Dry run?
